@@ -14,6 +14,10 @@ void OpenGLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
     glClearColor(1, 1, 1, 1); // limpa a janela (coloca uma cor RGBA)
+
+    connect(&timer, &QTimer::timeout, this, [&](){update();});
+    timer.start(10);
+
     qDebug("OpenGL Version: %s", glGetString(GL_VERSION));
     qDebug("GLSL Version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
@@ -29,31 +33,94 @@ void OpenGLWidget::resizeGL(int w, int h)
 {
 }
 
+void OpenGLWidget::rotationOrbitExample()
+{
+    makeCurrent();
+    mModel.setToIdentity();
+    static int angle=0;
+    mModel.rotate(angle++,QVector3D(0,0,1));
+    if (angle>359) angle = 0;
+}
+
+void OpenGLWidget::rotationCentroidExample()
+{
+    makeCurrent();
+    mModel.setToIdentity();
+    QVector4D centroid;
+    for (QVector4D x : vertices)
+        centroid += x;
+    centroid = (1.0f/static_cast<float>(vertices.size())*centroid);
+
+    static int angle{0};
+
+    mModel.translate(centroid.toVector3D());
+    mModel.rotate(angle++,QVector3D(0,0,1));
+    mModel.translate(-centroid.toVector3D());
+    if (angle>359) angle=0;
+}
+
+void OpenGLWidget::nonComutativeExample()
+{
+    makeCurrent();
+    mModel.setToIdentity();
+
+    QVector4D centroid;
+    for (QVector4D x : vertices)
+        centroid += x;
+    centroid = (1.0f/static_cast<float>(vertices.size())*centroid);
+
+    static int angle{0};
+
+    mModel.translate(-centroid.toVector3D());
+    mModel.rotate(angle++,QVector3D(0,0,1));
+    mModel.translate(centroid.toVector3D());
+    if (angle>359) angle=0;
+}
+
+void OpenGLWidget::scaleExample()
+{
+    makeCurrent();
+    mModel.setToIdentity();
+    double scale[] = {1,1};
+    static double percentage=1;
+    mModel.scale(scale[0]*percentage,scale[1]*percentage,1);
+    percentage -= 0.005;
+}
+
 void OpenGLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT);
+
     drawAxis();
-    //glUseProgram(shaderProgram);
+
     glBindVertexArray(vao);
+    auto locModelMatrix{glGetUniformLocation(shaderProgram, "mModel")};
+    glUniformMatrix4fv(locModelMatrix,1,GL_FALSE, mModel.data());
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    //rotationOrbitExample();
+    //rotationCentroidExample();
+    //nonComutativeExample();
+    scaleExample();
+    glUniformMatrix4fv(locModelMatrix,1,GL_FALSE,mModel.data());
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 }
 
 void OpenGLWidget::drawAxis()
 {
     makeCurrent();
+
     glUseProgram(shaderProgram);
     mModel.setToIdentity();
     auto locModelMatrix{glGetUniformLocation(shaderProgram, "mModel")};
     glUniformMatrix4fv(locModelMatrix,1,GL_FALSE,mModel.data());
 
     glBindVertexArray(vaoAxis);
-    glVertexAttrib4f(locModelMatrix,1,GL_FALSE,mModel.data());
-
-    glBindVertexArray(vaoAxis);
-    glVertexAttrib(1,1.0f,0.0f,0.0f,0.0f);
+    glVertexAttrib4f(1,1.0f,0.0f,0.0f,0.0f);
     glDrawArrays(GL_LINES, 0, 2);
     glVertexAttrib4f(1,0.0f,1.0f,0.0f,0.0f);
     glDrawArrays(GL_LINES, 2,2);
+//    glBindVertexArray(vaoAxis);
+//    glVertexAttrib4f(locModelMatrix,1,GL_FALSE,mModel.data());
 }
 
 void OpenGLWidget::toggleDarkMode(bool changeToDarkMode)
@@ -213,7 +280,7 @@ void OpenGLWidget::createVBOs()
         1.0f, 0.0f, 0, 1,
         0.0f, -1.0f, 0, 1,
         0.0f, 1.0f, 0, 1
-    }
+    };
 
     glGenBuffers(1, &vboVerticesAxis);
     glBindBuffer(GL_ARRAY_BUFFER, vboVerticesAxis);
