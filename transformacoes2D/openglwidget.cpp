@@ -23,7 +23,7 @@ void OpenGLWidget::initializeGL()
 
     createShaders();
     createVBOs();
-    changeDiagonal();
+    // changeDiagonal();
     // glClearColor(1,0,0,1); // limpa a janela (coloca uma cor RGBA)
     // QObject::connect(&timer, &QTimer::timeout,this,[&](){this->update();});
     // timer.start(10);
@@ -33,12 +33,55 @@ void OpenGLWidget::resizeGL(int w, int h)
 {
 }
 
+void OpenGLWidget::paintGL()
+{
+    // no QT é feito automaticamente mas evita que o OpenGL deixe o rastro de animações
+    glClear(GL_COLOR_BUFFER_BIT);
+    // desenha eixos
+    drawAxis();
+    glBindVertexArray(vao);
+    // acessa a entrada "mModel" do shader program e o define como a identidade para mostrar o original
+    auto locModelMatrix{glGetUniformLocation(shaderProgram, "mModel")};
+    glUniformMatrix4fv(locModelMatrix,1,GL_FALSE, mModel.data());
+
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+
+    // rotationOrbitExample();
+    // rotationCentroidExample();
+    // nonComutativeExample();
+    scaleExample();
+
+    // acessa a entrada "mModel" do shader program e o define como o da matriz atual para mostrar a transformação
+    glUniformMatrix4fv(locModelMatrix,1,GL_FALSE,mModel.data());
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void OpenGLWidget::drawAxis()
+{
+    // define o contexto do OpenGL como o da função atual
+    makeCurrent();
+    glUseProgram(shaderProgram);
+    // inicializa a matriz como a identidade para não haver outros efeitos nos vértices
+    mModel.setToIdentity();
+    auto locModelMatrix{glGetUniformLocation(shaderProgram, "mModel")};
+    glUniformMatrix4fv(locModelMatrix,1,GL_FALSE,mModel.data());
+    // Usado para definir e desenhar os dois eixos como linhas
+    glBindVertexArray(vaoAxis);
+    glVertexAttrib4f(1,1.0f,0.0f,0.0f,0.0f);
+    glDrawArrays(GL_LINES, 0, 2);
+    glVertexAttrib4f(1,0.0f,1.0f,0.0f,0.0f);
+    glDrawArrays(GL_LINES, 2,2);
+}
+
 void OpenGLWidget::rotationOrbitExample()
 {
     makeCurrent();
     mModel.setToIdentity();
+    // variável estática: estado compartilhado entre todas as chamadas do método
     static int angle=0;
+    // Método de alto nível para converter a matriz identidade na rotação pelo ângulo atual
     mModel.rotate(angle++,QVector3D(0,0,1));
+    // evita overflow
     if (angle>359) angle = 0;
 }
 
@@ -46,31 +89,32 @@ void OpenGLWidget::rotationCentroidExample()
 {
     makeCurrent();
     mModel.setToIdentity();
+    // determina o centróide a partir da média da posição dos vértices
     QVector4D centroid;
     for (QVector4D x : vertices)
         centroid += x;
     centroid = (1.0f/static_cast<float>(vertices.size())*centroid);
-
+    // variável estática: compartilhada entre todas as chamadas do método
     static int angle{0};
-
+    // Método de alto nível para converter a matriz identidade na translação a partir das coordenadas do centróide
     mModel.translate(centroid.toVector3D());
+    // Compõe as matrizes de translação com a de rotação pelo ângulo
     mModel.rotate(angle++,QVector3D(0,0,1));
+    // Compõe o resultado com a translação para as coordenadas inversas do centróide
     mModel.translate(-centroid.toVector3D());
     if (angle>359) angle=0;
 }
 
+// realiza o mesmo processo de rotação em volta do centróide na ordem reversa, e como as operações não são comutativas o resultado é diferente
 void OpenGLWidget::nonComutativeExample()
 {
     makeCurrent();
     mModel.setToIdentity();
-
     QVector4D centroid;
     for (QVector4D x : vertices)
         centroid += x;
     centroid = (1.0f/static_cast<float>(vertices.size())*centroid);
-
     static int angle{0};
-
     mModel.translate(-centroid.toVector3D());
     mModel.rotate(angle++,QVector3D(0,0,1));
     mModel.translate(centroid.toVector3D());
@@ -83,44 +127,9 @@ void OpenGLWidget::scaleExample()
     mModel.setToIdentity();
     double scale[] = {1,1};
     static double percentage=1;
+    // método de alto nível para converter a matriz identidade na escala pela porcentagem atual
     mModel.scale(scale[0]*percentage,scale[1]*percentage,1);
     percentage -= 0.005;
-}
-
-void OpenGLWidget::paintGL()
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    drawAxis();
-
-    glBindVertexArray(vao);
-    auto locModelMatrix{glGetUniformLocation(shaderProgram, "mModel")};
-    glUniformMatrix4fv(locModelMatrix,1,GL_FALSE, mModel.data());
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-    //rotationOrbitExample();
-    //rotationCentroidExample();
-    //nonComutativeExample();
-    scaleExample();
-    glUniformMatrix4fv(locModelMatrix,1,GL_FALSE,mModel.data());
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-}
-
-void OpenGLWidget::drawAxis()
-{
-    makeCurrent();
-
-    glUseProgram(shaderProgram);
-    mModel.setToIdentity();
-    auto locModelMatrix{glGetUniformLocation(shaderProgram, "mModel")};
-    glUniformMatrix4fv(locModelMatrix,1,GL_FALSE,mModel.data());
-
-    glBindVertexArray(vaoAxis);
-    glVertexAttrib4f(1,1.0f,0.0f,0.0f,0.0f);
-    glDrawArrays(GL_LINES, 0, 2);
-    glVertexAttrib4f(1,0.0f,1.0f,0.0f,0.0f);
-    glDrawArrays(GL_LINES, 2,2);
-//    glBindVertexArray(vaoAxis);
-//    glVertexAttrib4f(locModelMatrix,1,GL_FALSE,mModel.data());
 }
 
 void OpenGLWidget::toggleDarkMode(bool changeToDarkMode)

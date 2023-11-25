@@ -21,20 +21,23 @@ public:
     void resizeGL(int w, int h) override;
     void paintGL() override;
 
+    // Representa as matrizes de transformação a cada animação
     QMatrix4x4 mModel;
-
-    GLuint vboVertices{0};
+    // Para controlar a taxa de atualização das animações
+    QTimer timer;
+    // usados para definir e desenhar os eixos
     GLuint vboVerticesAxis{0};
+    GLuint vaoAxis{0};
+
+    GLuint shaderProgram{0};
+    GLuint vboVertices{0};
     GLuint vboColors{0};
     GLuint eboIndices{0};
     GLuint vao{0};
-    GLuint vaoAxis{0};
 
     std::vector<QVector4D> vertices;
     std::vector<QVector4D> colors;
     std::vector<GLuint> indices;
-    QTimer timer;
-    GLuint shaderProgram{0};
 
     void createVBOs();
     void createShaders();
@@ -59,4 +62,4 @@ public slots:
 private:
 };
 
-#endif // OPENGLWIDGET_H
+#endif
