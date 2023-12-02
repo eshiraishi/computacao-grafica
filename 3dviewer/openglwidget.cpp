@@ -108,27 +108,48 @@ void OpenGLWidget::createShaders(std::shared_ptr<Model> m)
 
 void OpenGLWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if (!model)
         return;
 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    camera.resizeViewPort(this->width(), this->height(), orthographic);
+
     // inicializa a matriz como a identidade para não haver outros efeitos nos vértices
     model->modelMatrix.setToIdentity();
-    // converte a matriz como rotaciona 180 graus em relação ao eixo Y
-    model->modelMatrix.rotate(180, 0, 1, 0);
-    // compõe a rotação com a escala em relação aos vértices do modelo
     model->rescaleModel();
 
+    glBindVertexArray(model->vao);
     auto shaderProgramID{model->shaderProgram[model->currentShader]};
     glUseProgram(shaderProgramID);
-
-    // acessa a a entrada "model" do shader
     auto locModel{glGetUniformLocation(shaderProgramID, "model")};
-    // define seu valor como a transformação composta
-    glUniformMatrix4fv(locModel, 1, GL_FALSE, model->modelMatrix.data());
+    auto locView{glGetUniformLocation(shaderProgramID, "view")};
+    auto locProjection{glGetUniformLocation(shaderProgramID, "projection")};
 
-    glBindVertexArray(model->vao);
-    glDrawElements(GL_TRIANGLES, model->indices.size(), GL_UNSIGNED_INT, nullptr);
+    glUniformMatrix4fv(locModel, 1, GL_FALSE, model->modelMatrix.data());
+    glUniformMatrix4fv(locView, 1, GL_FALSE, camera.viewMatrix.data());
+    glUniformMatrix4fv(locProjection, 1, GL_FALSE, camera.projectionMatrix.data());
+
+    glDrawElements(GL_TRIANGLES, model->numFaces * 3, GL_UNSIGNED_INT, nullptr);
+}
+
+void OpenGLWidget::toggleWireframe(bool w)
+{
+    makeCurrent();
+    wireframe = w;
+    update();
+}
+
+void OpenGLWidget::toggleOrthographic(bool ortho)
+{
+    makeCurrent();
+    orthographic = ortho;
+    update();
 }
 
 void OpenGLWidget::createVBOs(std::shared_ptr<Model> m)
@@ -197,7 +218,11 @@ void OpenGLWidget::toggleDarkMode(bool changeToDarkMode)
     update();
 }
 
-void OpenGLWidget::resizeGL(int w, int h) {}
+void OpenGLWidget::resizeGL(int width, int height)
+{
+    glViewport(0, 0, width, height);
+    camera.resizeViewPort(width, height);
+}
 
 void OpenGLWidget::destroyShaders(std::shared_ptr<Model> m)
 {

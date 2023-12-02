@@ -64,7 +64,6 @@ void Model::computeBBox()
     diagonalBB = (maxBB - minBB).length();
 }
 
-// Salva a transformação na matriz para alterar os vértices no shader e preservar os originais
 void Model::rescaleModel()
 {
     computeBBox();

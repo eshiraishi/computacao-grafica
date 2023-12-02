@@ -13,13 +13,21 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QFile>
-
 #include <model.h>
-
+#include <camera.h>
 class OpenGLWidget : public QOpenGLWidget, protected QOpenGLExtraFunctions
 {
     Q_OBJECT
+public slots:
+    void toggleWireframe(bool);
+    void toggleOrthographic(bool);
+    void toggleDarkMode(bool);
+    void showFileOpenDialog();
 public:
+    Camera camera;
+    bool wireframe{false};
+    bool orthographic{false};
+
     explicit OpenGLWidget(QWidget *parent = nullptr);
     void initializeGL() override;
     void paintGL() override;
@@ -46,13 +54,8 @@ public:
 
     void resizeGL(int w, int h) override;
     void keyPressEvent(QKeyEvent *event) override;
-
 signals:
     void statusBarMessage(QString);
-
-public slots:
-    void toggleDarkMode(bool);
-    void showFileOpenDialog();
 
 private:
 };

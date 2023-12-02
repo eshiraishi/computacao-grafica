@@ -25,10 +25,24 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QCheckBox" name="cBDarkMode">
+    <item row="2" column="0">
+     <widget class="QCheckBox" name="checkBoxDarkMode">
       <property name="text">
        <string>Dark Mode</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QCheckBox" name="checkBoxWireframe">
+      <property name="text">
+       <string>Wireframe</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QCheckBox" name="checkBoxOrtographic">
+      <property name="text">
+       <string>Orthographic</string>
       </property>
      </widget>
     </item>
@@ -40,7 +54,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>25</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -67,13 +81,15 @@
     <signal>statusBarMessage(QString)</signal>
     <slot>toggleDarkMode(bool)</slot>
     <slot>showFileOpenDialog()</slot>
+    <slot>toggleOrthographic(bool)</slot>
+    <slot>toggleWireframe(bool)</slot>
    </slots>
   </customwidget>
  </customwidgets>
  <resources/>
  <connections>
   <connection>
-   <sender>cBDarkMode</sender>
+   <sender>checkBoxDarkMode</sender>
    <signal>clicked(bool)</signal>
    <receiver>openGLWidget</receiver>
    <slot>toggleDarkMode(bool)</slot>
@@ -117,6 +133,38 @@
     <hint type="destinationlabel">
      <x>395</x>
      <y>292</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxOrtographic</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>openGLWidget</receiver>
+   <slot>toggleOrthographic(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>399</x>
+     <y>554</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>253</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxWireframe</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>openGLWidget</receiver>
+   <slot>toggleWireframe(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>399</x>
+     <y>523</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>253</y>
     </hint>
    </hints>
   </connection>

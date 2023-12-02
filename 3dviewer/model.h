@@ -36,8 +36,6 @@ public:
     std::vector<QString> fragmentShaderFile = {":/shaders/fzdepth.glsl"};
     std::vector<unsigned> shaderProgram;
     int currentShader{0};
-
-    // Representa a matriz de transformação usada no shader
     QMatrix4x4 modelMatrix;
 };
 #endif
