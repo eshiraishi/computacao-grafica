@@ -18,13 +18,10 @@
 class OpenGLWidget : public QOpenGLWidget, protected QOpenGLExtraFunctions
 {
     Q_OBJECT
-public slots:
-    void toggleWireframe(bool);
-    void toggleOrthographic(bool);
-    void toggleDarkMode(bool);
-    void showFileOpenDialog();
 public:
+    // A camera sera comum a todos os modelos visualizados pelo 3dviewer
     Camera camera;
+    // guarda os parametros de projeção e pintura enviados pela interface
     bool wireframe{false};
     bool orthographic{false};
 
@@ -54,6 +51,12 @@ public:
 
     void resizeGL(int w, int h) override;
     void keyPressEvent(QKeyEvent *event) override;
+public slots:
+    // slots adicionais que permitem controlar o tipo de projeção e a visualização como wireframe pela interface
+    void toggleWireframe(bool);
+    void toggleOrthographic(bool);
+    void toggleDarkMode(bool);
+    void showFileOpenDialog();
 signals:
     void statusBarMessage(QString);
 

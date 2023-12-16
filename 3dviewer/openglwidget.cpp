@@ -113,26 +113,34 @@ void OpenGLWidget::paintGL()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // determina a partir do atributo wireframe se a forma
+    // de desenhar os poligonos pelo OpenGL vai ser apenas
+    // as linhas ou preenchido
     if (wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+    // atualiza a camera a partir do viewport
     camera.resizeViewPort(this->width(), this->height(), orthographic);
 
-    // inicializa a matriz como a identidade para não haver outros efeitos nos vértices
     model->modelMatrix.setToIdentity();
     model->rescaleModel();
 
     glBindVertexArray(model->vao);
     auto shaderProgramID{model->shaderProgram[model->currentShader]};
     glUseProgram(shaderProgramID);
+
+    // novos inputs no vertex shader
     auto locModel{glGetUniformLocation(shaderProgramID, "model")};
     auto locView{glGetUniformLocation(shaderProgramID, "view")};
     auto locProjection{glGetUniformLocation(shaderProgramID, "projection")};
 
     glUniformMatrix4fv(locModel, 1, GL_FALSE, model->modelMatrix.data());
+    // o input da view gerado na criação da câmera é passado para o vertex shader
     glUniformMatrix4fv(locView, 1, GL_FALSE, camera.viewMatrix.data());
+    // o input da projection gerado na atualização do viewport
+    // da camera é passado para o vertex shader
     glUniformMatrix4fv(locProjection, 1, GL_FALSE, camera.projectionMatrix.data());
 
     glDrawElements(GL_TRIANGLES, model->numFaces * 3, GL_UNSIGNED_INT, nullptr);
